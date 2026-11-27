@@ -8,7 +8,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
-/* Layout: one page, two views switched by hash. Home = headline, map, extremes. Check = two dropdowns, verdict, chart, state table. */
+/* Page 1 of 2: headline, map, extremes. The checker lives in check.html. */
 :root{
   --bg:#f6f5f2; --surface:#ffffff; --ink:#1d2330; --muted:#5d6574; --line:#dcdad3;
   --accent:#c2410c; --bar:#b9bcc4; --warn:#b45309;
@@ -93,7 +93,7 @@ td.n,th.n{text-align:right}
   <header>
     <h1>One Person, One Vote, One Value?</h1>
     <p class="lede">Every Indian adult gets one vote, but under the current delimitation that vote does not carry the same weight. Each of the 543 Lok Sabha seats sends one MP, whether 58,000 or 38 lakh voters stand behind them. The more voters share an MP, the less your single vote counts. This map colours every constituency by what one vote is worth there.</p>
-    <div class="row"><a class="btn" href="#check">Check your constituency</a></div>
+    <div class="row"><a class="btn" href="check.html">Check your constituency</a></div>
   </header>
 
   <section class="chips" aria-label="Headline numbers">
@@ -121,28 +121,11 @@ td.n,th.n{text-align:right}
   </section>
  </div>
 
- <!-- CHECK -->
- <div class="view" id="check" hidden>
-  <header>
-    <a class="btn ghost" href="#home">← Back to the map</a>
-    <h1 style="margin-top:18px">What is your vote worth?</h1>
-    <p class="lede">Choose your state, then your constituency. Under the current delimitation, the answer is not 1.00 for everyone.</p>
-  </header>
-  <section class="pick">
-    <div><label for="st">State or union territory</label><select id="st"></select></div>
-    <div><label for="cs">Lok Sabha constituency</label><select id="cs"></select></div>
-  </section>
-  <section class="verdict" id="verdict" aria-live="polite"></section>
-  <section class="box"><h2>All 543 constituencies, fewest voters to most</h2><div id="chart"></div></section>
-  <section><h2>Same state, side by side</h2><div class="scroll"><table id="tbl"></table></div><p class="src">Source: <a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener">Election Commission of India, General Election 2024 statistical reports</a>.</p></section>
- </div>
-
  <section class="note">
   <h2>How the number is worked out</h2>
   <p><b>Vote value</b> = average electors per seat in India divided by electors in the seat. 1.00 is the national average. Above 1, fewer voters share the MP, so each vote counts for more. Below 1, more voters share the MP. Rank 1 is the seat where one vote counts most.</p>
   <p>Sources: <a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener">Election Commission of India, General Election 2024 statistical reports</a>; constituency electors from the ECI phase-wise annexures published through PIB (<a href="https://pib.gov.in/PressReleasePage.aspx?PRID=2019889" target="_blank" rel="noopener">phases 1 to 3</a>, <a href="https://static.pib.gov.in/WriteReadData/specificdocs/documents/2024/may/doc2024511336401.pdf" target="_blank" rel="noopener">phase 4</a>, <a href="https://static.pib.gov.in/WriteReadData/specificdocs/documents/2024/may/doc2024525338401.pdf" target="_blank" rel="noopener">phase 5</a>, <a href="https://pib.gov.in/PressReleasePage.aspx?PRID=2021393" target="_blank" rel="noopener">phase 6</a>, <a href="https://static.pib.gov.in/WriteReadData/specificdocs/documents/2024/may/doc2024528338801.pdf" target="_blank" rel="noopener">phase 7</a>). They exclude service electors. <span class="tag">Surat</span> is approximate (about 17.67 lakh, from a <a href="https://www.deccanherald.com/elections/india/bjp-registers-first-victory-as-surat-candidate-mukesh-dalal-wins-unopposed-2988832" target="_blank" rel="noopener">Deccan Herald report</a>). Outer Manipur is the sum of its two polling phases. Map outlines: <a href="https://projects.datameet.org/maps/parliamentary-constituencies/" target="_blank" rel="noopener">DataMeet</a>.</p>
   <p>Assam's seats were redrawn in 2023, so its shapes are the older outlines matched to the nearest new seat, and small seats such as Lakshadweep or the Delhi and Mumbai seats are hard to see at this size. Use the lists and the checker for those. This measures how many voters share one MP, not turnout or an MP's performance.</p>
- </section>
 </main>
 
 <script>
@@ -195,65 +178,7 @@ $('topl').innerHTML=sorted.slice(0,8).map(li).join('');
 $('botl').innerHTML=sorted.slice(-8).reverse().map(li).join('');
 document.querySelectorAll('ol.rank').forEach(o=>o.addEventListener('click',e=>{const b=e.target.closest('button');if(b)openCheck(b.dataset.id)}));
 
-/* ---------- check ---------- */
-const stSel=$('st'), csSel=$('cs');
-stSel.innerHTML=states.map(s=>`<option>${s}</option>`).join('');
-function fillCons(sel){
-  const list=[...byState[stSel.value]].sort((a,b)=>a.c.localeCompare(b.c));
-  csSel.innerHTML=list.map(r=>`<option value="${r.id}">${r.c}</option>`).join('');
-  if(sel)csSel.value=sel;
-}
-let cur=null,sortKey='e',sortDir=1;
-function show(id){cur=byId[id];render(cur)}
-stSel.addEventListener('change',()=>{fillCons();show(csSel.value)});
-csSel.addEventListener('change',()=>show(csSel.value));
-function openCheck(id){const r=byId[id];stSel.value=r.s;fillCons(id);show(id);location.hash='check';window.scrollTo(0,0)}
-
-function render(r){
-  const st=byState[r.s], sMean=st.reduce((a,x)=>a+x.e,0)/st.length;
-  const pct=Math.round(Math.abs(r.v-1)*100);
-  const diff=r.v>=1.005?`${pct}% above`:(r.v<=0.995?`${pct}% below`:'at');
-  $('verdict').innerHTML=`
-    <div class="place">${r.c}, ${r.s}${r.a?' (approximate electors)':''}</div>
-    <div class="big">${vtxt(r.v)}<span>vote value</span></div>
-    <p>One vote here counts ${diff} the national average. About <b>${fmt(r.e)}</b> voters share one MP. Your vote is worth ${(maxR.e/r.e).toFixed(1)} times a vote in ${maxR.c}, where the most voters share one MP. A vote in ${minR.c}, where the fewest do, is worth ${(r.e/minR.e).toFixed(1)} times yours.</p>
-    <div class="facts">
-      <div class="fact"><b>1 in ${fmt(r.e)}</b><span>your share of your MP</span></div>
-      <div class="fact"><b>${r.rank} of 543</b><span>rank, 1 is the most valuable vote</span></div>
-      <div class="fact"><b>${fmt(Math.round(mean))}</b><span>average electors per seat in India</span></div>
-      <div class="fact"><b>${(mean/sMean).toFixed(2)}</b><span>${r.s} average vote value (${st.length} seat${st.length>1?'s':''})</span></div>
-    </div>`;
-  chart();table();
-}
-function chart(){
-  const W=780,H=268,L=44,R=12,T=14,B=34,n=sorted.length,iw=W-L-R,ih=H-T-B,max=4000000;
-  const x=i=>L+(i+.5)*iw/n,y=v=>T+ih-(v/max)*ih,bw=Math.max(1,iw/n-.4);
-  let s=`<svg class="c" viewBox="0 0 ${W} ${H}" role="img" aria-label="Electors in every constituency, sorted, with ${cur.c} highlighted">`;
-  [0,1,2,3,4].forEach(m=>{const v=m*1e6;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${m?m+'M':'0'}</text>`});
-  sorted.forEach((r,i)=>{if(r.id!==cur.id)s+=`<rect x="${x(i)-bw/2}" y="${y(r.e)}" width="${bw}" height="${T+ih-y(r.e)}" fill="var(--bar)"><title>${r.c}, ${r.s}: ${fmt(r.e)}</title></rect>`});
-  s+=`<line x1="${L}" x2="${W-R}" y1="${y(mean)}" y2="${y(mean)}" stroke="var(--ink)" stroke-dasharray="4 4"/><text x="${L+4}" y="${y(mean)-6}">national average ${fmt(Math.round(mean))}</text>`;
-  const cx=x(cur.rank-1),anchor=cx>W-170?'end':(cx<L+120?'start':'middle');
-  s+=`<rect x="${cx-2}" y="${y(cur.e)}" width="4" height="${T+ih-y(cur.e)}" fill="var(--accent)"/><circle cx="${cx}" cy="${y(cur.e)}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/><text class="hl" x="${cx}" y="${Math.max(12,y(cur.e)-10)}" text-anchor="${anchor}">${cur.c} · ${fmt(cur.e)}</text>`;
-  s+=`<text x="${L}" y="${H-10}">${minR.c} (fewest voters)</text><text x="${W-R}" y="${H-10}" text-anchor="end">${maxR.c} (most voters)</text><a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener"><text x="${L}" y="${H-1}" style="font-size:11px;text-decoration:underline">Source: Election Commission of India, General Election 2024 (click for link)</text></a></svg>`;
-  $('chart').innerHTML=s;
-}
-function table(){
-  const rows=[...byState[cur.s]].sort((a,b)=>sortDir*(sortKey==='c'?a.c.localeCompare(b.c):(a[sortKey]-b[sortKey])));
-  const ar=k=>sortKey===k?(sortDir>0?' ▲':' ▼'):'';
-  $('tbl').innerHTML=`<thead><tr><th data-k="c">Constituency${ar('c')}</th><th class="n" data-k="e">Electors${ar('e')}</th><th class="n" data-k="v">Vote value${ar('v')}</th><th class="n" data-k="rank">Rank${ar('rank')}</th></tr></thead><tbody>`+
-   rows.map(r=>`<tr${r.id===cur.id?' style="color:var(--accent);font-weight:600"':''}><td>${r.c}</td><td class="n">${fmt(r.e)}${r.a?'*':''}</td><td class="n">${vtxt(r.v)}</td><td class="n">${r.rank}</td></tr>`).join('')+'</tbody>';
-  document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=sortKey===k?-sortDir:1;sortKey=k;table()});
-}
-
-/* ---------- routing ---------- */
-function route(){
-  const c=location.hash==='#check';
-  $('home').hidden=c;$('check').hidden=!c;
-  if(c&&!cur){const r=byId['Pune|Maharashtra'];stSel.value=r.s;fillCons(r.id);show(r.id)}
-  window.scrollTo(0,0);
-}
-window.addEventListener('hashchange',route);
-route();
+function openCheck(id){location.href='check.html?id='+encodeURIComponent(id)}
 </script>
 </body>
 </html>
