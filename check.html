@@ -134,6 +134,7 @@ dl.det dd small{display:block;font-weight:400;color:var(--muted);font-size:12.5p
       </div>
     </div>
   </section>
+  <section class="box"><h2>States and union territories compared</h2><p class="src" style="margin:0 0 10px">State vote value = national average electors per seat divided by the state's average electors per seat. Seats in brackets. Highest first.</p><div id="schart"></div><p class="src">Source: <a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener">Election Commission of India, General Election 2024 statistical reports</a>.</p></section>
   <section class="box"><h2>All 543 constituencies, fewest voters to most</h2><div id="chart"></div></section>
   <section><h2>Same state, side by side</h2><div class="scroll"><table id="tbl"></table></div><p class="src">Source: <a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener">Election Commission of India, General Election 2024 statistical reports</a>.</p></section>
  </div>
@@ -187,7 +188,7 @@ function render(r){
       <div class="fact"><b>${fmt(Math.round(mean))}</b><span>average electors per seat in India</span></div>
       <div class="fact"><b>${(mean/sMean).toFixed(2)}</b><span>${r.s} average vote value (${st.length} seat${st.length>1?'s':''})</span></div>
     </div>`;
-  chart();table();maps();details();
+  chart();table();maps();details();stateChart();
 }
 function chart(){
   const W=780,H=268,L=44,R=12,T=14,B=34,n=sorted.length,iw=W-L-R,ih=H-T-B,max=4000000;
@@ -276,12 +277,36 @@ function details(){
    +row('Seats in '+r.s,n);
   if(n>1){
     h+=row('Rank within state',stRank+' of '+n,'1 is the most valuable vote')
-     +row('State average electors per seat',fmt(Math.round(sMean)))
      +row('Fewest voters in state',lo.c,fmt(lo.e)+' electors')
      +row('Most voters in state',hi.c,fmt(hi.e)+' electors');
   }
+  const ss=stateStats.find(x=>x.s===r.s),sr=stateStats.indexOf(ss)+1;
+  h+=row('State average electors per seat',fmt(Math.round(sMean)),'National average is '+fmt(Math.round(mean)))
+   +row('State vote value',vtxt(ss.v),'National average is 1.00')
+   +row('State rank among states and UTs',sr+' of '+stateStats.length,'1 is the most valuable vote');
   h+=row('Share of seats vs electors',pc(n/543*100)+' vs '+pc(stTotal/total*100),'of all Lok Sabha seats vs all electors');
   $('det').innerHTML=h;
+}
+
+
+/* ---------- states compared ---------- */
+const stateStats=states.map(k=>{const l=byState[k],m=l.reduce((a,x)=>a+x.e,0)/l.length;return{s:k,n:l.length,m,v:mean/m}}).sort((a,b)=>b.v-a.v);
+function stateChart(){
+  const W=780,L=200,R=64,T=10,rh=20,H=T+stateStats.length*rh+34,cap=3,iw=W-L-R,x=v=>L+Math.min(v,cap)/cap*iw;
+  const esc=t=>t.replace(/&/g,'&amp;');
+  let c=`<svg class="c" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vote value of every state and union territory, with ${esc(cur.s)} highlighted">`;
+  stateStats.forEach((o,i)=>{
+    const y=T+i*rh,on=o.s===cur.s,nm=o.s.length>24?o.s.slice(0,23)+'\u2026':o.s,w=x(o.v)-L;
+    c+=`<g><title>${esc(o.s)}: vote value ${vtxt(o.v)}, ${fmt(Math.round(o.m))} electors per seat on average, ${o.n} seat${o.n>1?'s':''}</title>`
+     +`<text class="${on?'hl':''}" x="${L-8}" y="${y+13}" text-anchor="end">${esc(nm)} (${o.n})</text>`
+     +`<rect x="${L}" y="${y+3}" width="${w}" height="${rh-7}" fill="${on?'var(--accent)':'var(--bar)'}"/>`
+     +(o.v>cap?`<text x="${W-R-2}" y="${y+13}" text-anchor="end" style="fill:var(--bg);font-weight:700">\u00bb</text>`:'')
+     +`<text class="${on?'hl':''}" x="${W-8}" y="${y+13}" text-anchor="end">${vtxt(o.v)}</text></g>`;
+  });
+  const ly=T+stateStats.length*rh;
+  c+=`<line x1="${x(1)}" x2="${x(1)}" y1="${T-4}" y2="${ly}" stroke="var(--ink)" stroke-dasharray="4 4"/><text x="${x(1)}" y="${ly+14}" text-anchor="middle">1.00 = national average</text>`
+   +`<text x="${W-8}" y="${ly+14}" text-anchor="end">\u00bb bar cut off at ${cap}</text></svg>`;
+  $('schart').innerHTML=c;
 }
 
 /* ---------- start ---------- */
