@@ -115,6 +115,13 @@ td.n,th.n{text-align:right}
     <div class="pin" id="pin"><span style="color:var(--muted)">Hover a constituency for its vote value. Tap or click one to pin it here.</span></div>
   </section>
 
+  <section class="box">
+    <h2>Vote value by state and union territory</h2>
+    <p class="src" style="margin:0 0 10px">State vote value = national average electors per seat divided by the state's average electors per seat. Seats in brackets. Highest first. Orange is above the national average, blue is below, grey is level.</p>
+    <div id="schart"></div>
+    <p class="src">Source: <a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener">Election Commission of India, General Election 2024 statistical reports</a>.</p>
+  </section>
+
   <section class="two">
     <div class="box"><h2>Most valuable votes</h2><ol class="rank" id="topl"></ol><p class="src">Electors · vote value. Source: <a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener">Election Commission of India, 2024</a>.</p></div>
     <div class="box"><h2>Least valuable votes</h2><ol class="rank" id="botl"></ol><p class="src">Electors · vote value. Source: <a href="https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports" target="_blank" rel="noopener">Election Commission of India, 2024</a>.</p></div>
@@ -178,6 +185,26 @@ $('topl').innerHTML=sorted.slice(0,8).map(li).join('');
 $('botl').innerHTML=sorted.slice(-8).reverse().map(li).join('');
 document.querySelectorAll('ol.rank').forEach(o=>o.addEventListener('click',e=>{const b=e.target.closest('button');if(b)openCheck(b.dataset.id)}));
 
+
+/* ---------- state-wise vote value ---------- */
+const stateStats=states.map(k=>{const l=byState[k],m=l.reduce((a,x)=>a+x.e,0)/l.length;return{s:k,n:l.length,m,v:mean/m}}).sort((a,b)=>b.v-a.v);
+(function stateChart(){
+  const W=780,L=200,R=64,T=10,rh=20,H=T+stateStats.length*rh+34,cap=3,iw=W-L-R,x=v=>L+Math.min(v,cap)/cap*iw;
+  const esc=t=>t.replace(/&/g,'&amp;');
+  let c=`<svg class="c" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vote value of every state and union territory, highest first">`;
+  stateStats.forEach((o,i)=>{
+    const y=T+i*rh,nm=o.s.length>24?o.s.slice(0,23)+'\u2026':o.s,w=x(o.v)-L;
+    c+=`<g><title>${esc(o.s)}: vote value ${vtxt(o.v)}, ${fmt(Math.round(o.m))} electors per seat on average, ${o.n} seat${o.n>1?'s':''}</title>`
+     +`<text x="${L-8}" y="${y+13}" text-anchor="end">${esc(nm)} (${o.n})</text>`
+     +`<rect x="${L}" y="${y+3}" width="${w}" height="${rh-7}" fill="${Math.abs(o.v-1)<.005?'var(--bar)':(o.v>1?'var(--hi)':'var(--lo)')}"/>`
+     +(o.v>cap?`<text x="${W-R-2}" y="${y+13}" text-anchor="end" style="fill:var(--bg);font-weight:700">\u00bb</text>`:'')
+     +`<text x="${W-8}" y="${y+13}" text-anchor="end">${vtxt(o.v)}</text></g>`;
+  });
+  const ly=T+stateStats.length*rh;
+  c+=`<line x1="${x(1)}" x2="${x(1)}" y1="${T-4}" y2="${ly}" stroke="var(--ink)" stroke-dasharray="4 4"/><text x="${x(1)}" y="${ly+14}" text-anchor="middle">1.00 = national average</text>`
+   +`<text x="${W-8}" y="${ly+14}" text-anchor="end">\u00bb bar cut off at ${cap}</text></svg>`;
+  $('schart').innerHTML=c;
+})();
 function openCheck(id){location.href='check.html?id='+encodeURIComponent(id)}
 </script>
 </body>
