@@ -1,7 +1,7 @@
 /* Vote Value i18n. English catalog lives here; each other language is lang/<code>.js (sets VVT.<code>={...}).
    Missing keys fall back to English. Markup: [id]text[/] = link from LINKS, <b> allowed. */
 (function(){
-var LANGS=[['en','English'],['hi','हिन्दी'],['te','తెలుగు']];
+var LANGS=[['en','English'],['hi','हिन्दी'],['te','తెలుగు'],['bn','বাংলা'],['ta','தமிழ்'],['ml','മലയാളം']];
 var U='https://static.pib.gov.in/WriteReadData/specificdocs/documents/2024/may/';
 var LINKS={eci:'https://www.eci.gov.in/general-election-to-loksabha-2024-statistical-reports',p13:'https://pib.gov.in/PressReleasePage.aspx?PRID=2019889',p4:U+'doc2024511336401.pdf',p5:U+'doc2024525338401.pdf',p6:'https://pib.gov.in/PressReleasePage.aspx?PRID=2021393',p7:U+'doc2024528338801.pdf',dm:'https://projects.datameet.org/maps/parliamentary-constituencies/',dh:'https://www.deccanherald.com/elections/india/bjp-registers-first-victory-as-surat-candidate-mukesh-dalal-wins-unopposed-2988832',prs:'https://prsindia.org/billtrack/the-delimitation-bill-2026',scroll:'https://scroll.in/latest/1097370/cabinet-clears-delimitation-bill-with-50-seat-increase-for-all-states-freeze-till-2051-reports',logical:'https://thelogicalindian.com/cabinet-clears-delimitation-bill-135490/'};
 var EN={
@@ -57,7 +57,7 @@ th_s:'State or union territory',th_now:'Seats now',th_new:'Seats in scenario',th
 var lang='en';try{lang=localStorage.getItem('vv-lang')||'en'}catch(e){}
 if(!LANGS.some(function(x){return x[0]===lang}))lang='en';
 window.VVT=window.VVT||{};window.VVP=window.VVP||{};
-if(lang!=='en')document.write('<script src="lang/'+lang+'.js"><\/script><script src="lang/'+lang+'-names.js"><\/script>');
+if(lang!=='en')document.write('<script src="lang/'+lang+'.js"><\/script>');
 window.pn=function(x){return (window.VVP[lang]||{})[x]||x};
 function mk(s){return s.replace(/\[(\w+)\]([^\[]*?)\[\/\]/g,function(m,id,tx){return '<a href="'+LINKS[id]+'" target="_blank" rel="noopener">'+tx+'</a>'})}
 window.t=function(k,p){var s=((window.VVT[lang]||{})[k])||EN[k]||k;
